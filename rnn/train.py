@@ -16,7 +16,7 @@ import data
 import model
 
 from torch.autograd import Variable
-from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_checkpoint
+from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_checkpoint, parse_arch
 
 parser = argparse.ArgumentParser(description='PyTorch PennTreeBank/WikiText2 Language Model')
 parser.add_argument('--data', type=str, default='../data/penn/',
@@ -118,8 +118,11 @@ ntokens = len(corpus.dictionary)
 if args.continue_train:
     model = torch.load(os.path.join(args.save, 'model.pt'))
 else:
-    genotype = eval("genotypes.%s" % args.arch)
-    model = model.RNNModel(ntokens, args.emsize, args.nhid, args.nhidlast, 
+    try:
+        genotype = eval("genotypes.%s" % args.arch)
+    except:
+        genotype = parse_arch(args.arch)
+    model = model.RNNModel(ntokens, args.emsize, args.nhid, args.nhidlast,
                        args.dropout, args.dropouth, args.dropoutx, args.dropouti, args.dropoute, 
                        cell_cls=model.DARTSCell, genotype=genotype)
 

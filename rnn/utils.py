@@ -3,7 +3,7 @@ import torch.nn as nn
 import os, shutil
 import numpy as np
 from torch.autograd import Variable
-
+from genotypes import Genotype
 
 def repackage_hidden(h):
     if type(h) == Variable:
@@ -91,3 +91,21 @@ def mask2d(B, D, keep_prob, cuda=True):
         m = m.cuda()
     return m
 
+def parse_arch(arch):
+    arch = list(map(int, arch.split()))
+    lenth = len(arch) // 2
+    recurrent = []
+    concat = [i for i in range(lenth+1)]
+    ACT = {
+        0: 'tanh',
+        1: 'relu',
+        2: 'identity',
+        3: 'sigmoid'
+    }
+    for i in range(lenth):
+        pre_node = arch[2*i]
+        activation = ACT[arch[2*i+1]]
+        recurrent.append((activation, pre_node))
+        if pre_node in concat:
+            concat.remove(pre_node)
+    return Genotype(recurrent=recurrent, concat=concat)
