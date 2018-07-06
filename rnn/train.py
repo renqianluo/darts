@@ -82,9 +82,9 @@ if args.nhidlast < 0:
 if args.small_batch_size < 0:
     args.small_batch_size = args.batch_size
 
-if not args.continue_train:
+"""if not args.continue_train:
     args.save = 'eval-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-    create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+    create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))"""
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
