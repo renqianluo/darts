@@ -106,6 +106,8 @@ def parse_arch(arch):
         pre_node = arch[2*i]
         activation = ACT[arch[2*i+1]]
         recurrent.append((activation, pre_node))
+        """
         if pre_node in concat:
-            concat.remove(pre_node)
+            concat.remove(pre_node)"""
+    concat = range(1, lenth+1)
     return Genotype(recurrent=recurrent, concat=concat)
