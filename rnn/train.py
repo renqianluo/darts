@@ -258,21 +258,21 @@ try:
     while epoch < args.epochs + 1:
         epoch_start_time = time.time()
         try:
-          train()
+            train()
         except:
-          logging.info('rolling back to the previous best model ...')
-          model = torch.load(os.path.join(args.save, 'model.pt'))
-          parallel_model = model.cuda()
-          
-          optimizer_state = torch.load(os.path.join(args.save, 'optimizer.pt'))
-          if 't0' in optimizer_state['param_groups'][0]:
-            optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
-          else:
-            optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
-          optimizer.load_state_dict(optimizer_state)
+            logging.info('rolling back to the previous best model ...')
+            model = torch.load(os.path.join(args.save, 'model.pt'))
+            parallel_model = model.cuda()
 
-          epoch = torch.load(os.path.join(args.save, 'misc.pt'))['epoch']
-          continue
+            optimizer_state = torch.load(os.path.join(args.save, 'optimizer.pt'))
+            if 't0' in optimizer_state['param_groups'][0]:
+                optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
+            else:
+                optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
+            optimizer.load_state_dict(optimizer_state)
+
+            epoch = torch.load(os.path.join(args.save, 'misc.pt'))['epoch']
+            continue
 
         if 't0' in optimizer.param_groups[0]:
             tmp = {}
