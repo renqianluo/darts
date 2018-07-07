@@ -119,10 +119,12 @@ try:
     genotype = eval("genotypes.%s" % args.arch)
 except:
     genotype = parse_arch(args.arch)
-if args.continue_train:
-    model = torch.load(os.path.join(args.save, 'model.pt'))
-elif os.path.exists(os.path.join(args.save, 'model.pt')):
+
+if os.path.exists(os.path.join(args.save, 'model.pt')):
     print("Found model.pt in {}, automatically continue training.".format(args.save))
+    args.continue_train = True
+
+if args.continue_train:
     model = torch.load(os.path.join(args.save, 'model.pt'))
 else:
     model = model.RNNModel(ntokens, args.emsize, args.nhid, args.nhidlast,
@@ -248,10 +250,11 @@ try:
         else:
             optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
         optimizer.load_state_dict(optimizer_state)
+        epoch = torch.load(os.path.join(args.save, 'misc.pt'))['epoch']
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
+        epoch = 1
 
-    epoch = 1
     while epoch < args.epochs + 1:
         epoch_start_time = time.time()
         try:
