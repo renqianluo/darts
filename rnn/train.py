@@ -117,6 +117,9 @@ test_data = batchify(corpus.test, test_batch_size, args)
 ntokens = len(corpus.dictionary)
 if args.continue_train:
     model = torch.load(os.path.join(args.save, 'model.pt'))
+elif os.path.exists(os.path.join(args.save, 'model.pt')):
+    print("Found model.pt in {}, automatically continue training.".format(args.save))
+    model = torch.load(os.path.join(args.save, 'model.pt'))
 else:
     try:
         genotype = eval("genotypes.%s" % args.arch)
