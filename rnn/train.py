@@ -115,16 +115,16 @@ test_data = batchify(corpus.test, test_batch_size, args)
 
 
 ntokens = len(corpus.dictionary)
+try:
+    genotype = eval("genotypes.%s" % args.arch)
+except:
+    genotype = parse_arch(args.arch)
 if args.continue_train:
     model = torch.load(os.path.join(args.save, 'model.pt'))
 elif os.path.exists(os.path.join(args.save, 'model.pt')):
     print("Found model.pt in {}, automatically continue training.".format(args.save))
     model = torch.load(os.path.join(args.save, 'model.pt'))
 else:
-    try:
-        genotype = eval("genotypes.%s" % args.arch)
-    except:
-        genotype = parse_arch(args.arch)
     model = model.RNNModel(ntokens, args.emsize, args.nhid, args.nhidlast,
                        args.dropout, args.dropouth, args.dropoutx, args.dropouti, args.dropoute, 
                        cell_cls=model.DARTSCell, genotype=genotype)
