@@ -96,6 +96,10 @@ logging.getLogger().addHandler(fh)
 # Set the random seed manually for reproducibility.
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
+if args.cuda:
+  torch.cuda.manual_seed(args.seed)
+  torch.backends.cudnn.deterministic = True
+
 if torch.cuda.is_available():
     if not args.cuda:
         print("WARNING: You have a CUDA device, so you should probably run with --cuda")
