@@ -226,7 +226,7 @@ def train():
         optimizer.param_groups[0]['lr'] = lr2
 
         if np.isnan(total_loss[0]):
-          raise
+          raise OverflowError('NAN loss')
 
         if batch % args.log_interval == 0 and batch > 0:
             cur_loss = total_loss[0] / args.log_interval
