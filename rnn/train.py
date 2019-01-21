@@ -82,16 +82,13 @@ if args.nhidlast < 0:
 if args.small_batch_size < 0:
     args.small_batch_size = args.batch_size
 
-"""if not args.continue_train:
-    args.save = 'eval-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
-    create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))"""
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
+#fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 # Set the random seed manually for reproducibility.
 np.random.seed(args.seed)

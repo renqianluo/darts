@@ -34,3 +34,8 @@ DARTS_V2 = Genotype(recurrent=[('sigmoid', 0), ('relu', 1), ('relu', 1), ('ident
 
 DARTS = DARTS_V2
 
+arch6=Genotype(recurrent=[('sigmoid', 0), ('identity', 1), ('sigmoid', 1), ('relu', 1), ('identity', 1), ('sigmoid', 3), ('sigmoid', 6), ('tanh', 5)], concat=range(1, 9))
+arch7=Genotype(recurrent=[('tanh', 0), ('identity', 0), ('relu', 0), ('relu', 0), ('relu', 0), ('relu', 3), ('identity', 5), ('identity', 5)], concat=range(1, 9))
+arch8=Genotype(recurrent=[('identity', 0), ('relu', 0), ('tanh', 0), ('sigmoid', 0), ('tanh', 2), ('tanh', 0), ('relu', 3), ('sigmoid', 1)], concat=range(1, 9))
+arch9=Genotype(recurrent=[('identity', 0), ('sigmoid', 0), ('identity', 1), ('sigmoid', 0), ('relu', 3), ('relu', 3), ('tanh', 0), ('relu', 4)], concat=range(1, 9))
+arch10=Genotype(recurrent=[('identity', 0), ('identity', 0), ('identity', 0), ('identity', 0), ('relu', 3), ('identity', 3), ('identity', 1), ('sigmoid', 6)], concat=range(1, 9))

@@ -41,17 +41,18 @@ parser.add_argument('--label_smooth', type=float, default=0.1, help='label smoot
 parser.add_argument('--gamma', type=float, default=0.97, help='learning rate decay')
 parser.add_argument('--decay_period', type=int, default=1, help='epochs between two learning rate decays')
 parser.add_argument('--parallel', action='store_true', default=False, help='data parallelism')
+parser.add_argument('--load_data_to_memory', action='store_true', default=False)
 args = parser.parse_args()
 
-args.save = 'eval-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+#args.save = 'eval-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
 
 log_format = '%(asctime)s %(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
     format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
+#fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+#fh.setFormatter(logging.Formatter(log_format))
+#logging.getLogger().addHandler(fh)
 
 CLASSES = 1000
 
@@ -83,6 +84,7 @@ def main():
   torch.manual_seed(args.seed)
   cudnn.enabled=True
   torch.cuda.manual_seed(args.seed)
+  args.gpu = torch.cuda.device_count()
   logging.info('gpu device = %d' % args.gpu)
   logging.info("args = %s", args)
 
@@ -108,35 +110,60 @@ def main():
     )
 
   traindir = os.path.join(args.data, 'train')
-  validdir = os.path.join(args.data, 'val')
+  validdir = os.path.join(args.data, 'validation')
   normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-  train_data = dset.ImageFolder(
-    traindir,
-    transforms.Compose([
-      transforms.RandomResizedCrop(224),
-      transforms.RandomHorizontalFlip(),
-      transforms.ColorJitter(
-        brightness=0.4,
-        contrast=0.4,
-        saturation=0.4,
-        hue=0.2),
-      transforms.ToTensor(),
-      normalize,
-    ]))
-  valid_data = dset.ImageFolder(
-    validdir,
-    transforms.Compose([
-      transforms.Resize(256),
-      transforms.CenterCrop(224),
-      transforms.ToTensor(),
-      normalize,
-    ]))
+  if args.load_data_to_memory:
+    train_data = utils.InMemoryDataset(
+      traindir,
+      transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(
+          brightness=0.4,
+          contrast=0.4,
+          saturation=0.4,
+          hue=0.2),
+        transforms.ToTensor(),
+        normalize,
+      ])
+    )
+    valid_data = utils.InMemoryDataset(
+      validdir,
+      transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        normalize,
+      ])
+    )
+  else:
+    train_data = dset.ImageFolder(
+      traindir,
+      transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(
+          brightness=0.4,
+          contrast=0.4,
+          saturation=0.4,
+          hue=0.2),
+        transforms.ToTensor(),
+        normalize,
+      ]))
+    valid_data = dset.ImageFolder(
+      validdir,
+      transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        normalize,
+      ]))
 
   train_queue = torch.utils.data.DataLoader(
-    train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=16)
 
   valid_queue = torch.utils.data.DataLoader(
-    valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True, num_workers=4)
+    valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True, num_workers=16)
 
   scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.decay_period, gamma=args.gamma)
 
@@ -144,7 +171,10 @@ def main():
   for epoch in range(args.epochs):
     scheduler.step()
     logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
-    model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
+    if isinstance(model, torch.nn.DataParallel):
+      model.module.drop_path_prob = args.drop_path_prob * epoch / args.epochs
+    else:
+      model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
 
     train_acc, train_obj = train(train_queue, model, criterion_smooth, optimizer)
     logging.info('train_acc %f', train_acc)

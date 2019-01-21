@@ -1,8 +1,10 @@
 import os
 import numpy as np
-import torch
 import shutil
+import torch
+import torch.utils.data as data
 import torchvision.transforms as transforms
+from torchvision.datasets.folder import has_file_allowed_extension, find_classes, default_loader
 from torch.autograd import Variable
 
 
@@ -110,12 +112,54 @@ def drop_path(x, drop_prob):
 
 def create_exp_dir(path, scripts_to_save=None):
   if not os.path.exists(path):
-    os.mkdir(path)
+    os.makekdirs(path)
   print('Experiment dir : {}'.format(path))
 
   if scripts_to_save is not None:
-    os.mkdir(os.path.join(path, 'scripts'))
+    os.makedirs(os.path.join(path, 'scripts'), exist_ok=True)
     for script in scripts_to_save:
       dst_file = os.path.join(path, 'scripts', os.path.basename(script))
       shutil.copyfile(script, dst_file)
 
+
+IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif']
+
+
+class InMemoryDataset(data.Dataset):
+    def __init__(self, path, transform=None):
+        super(InMemoryDataset, self).__init__()
+        self.path = path
+        self.transform = transform
+        self.samples = []
+        classes, class_to_idx = find_classes(self.path)
+        dir = os.path.expanduser(self.path)
+        for target in sorted(os.listdir(dir)):
+            d = os.path.join(dir, target)
+            if not os.path.isdir(d):
+                continue
+            for root, _, fnames in sorted(os.walk(d)):
+                for fname in sorted(fnames):
+                    if has_file_allowed_extension(fname, IMG_EXTENSIONS):
+                        path = os.path.join(root, fname)
+                        image = default_loader(path)
+                        item = (image, class_to_idx[target])
+                        self.samples.append(item)
+        
+    def __len__(self):
+        return len(self.samples)
+    
+    def __getitem__(self, index):
+        sample, target = self.samples[index]
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample, target
+    
+    def __repr__(self):
+        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
+        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
+        fmt_str += '    Root Location: {}\n'.format(self.path)
+        tmp = '    Transforms (if any): '
+        fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        tmp = '    Target Transforms (if any): '
+        fmt_str += '{0}{1}'.format(tmp, self.target_transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        return fmt_str
