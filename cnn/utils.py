@@ -1,10 +1,10 @@
 import os
 import numpy as np
 import shutil
+from PIL import Image
 import torch
 import torch.utils.data as data
 import torchvision.transforms as transforms
-from torchvision.datasets.folder import has_file_allowed_extension, find_classes, default_loader
 from torch.autograd import Variable
 
 
@@ -123,6 +123,42 @@ def create_exp_dir(path, scripts_to_save=None):
 
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif']
+
+
+def find_classes(root):
+    classes = [d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))]
+    classes.sort()
+    class_to_idx = {classes[i]: i for i in range(len(classes))}
+    return classes, class_to_idx
+
+
+def has_file_allowed_extension(filename, extensions):
+    filename_lower = filename.lower()
+    return any(filename_lower.endswith(ext) for ext in extensions)
+
+
+def pil_loader(path):
+    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+    with open(path, 'rb') as f:
+        img = Image.open(f)
+        return img.convert('RGB')
+
+
+def accimage_loader(path):
+    import accimage
+    try:
+        return accimage.Image(path)
+    except IOError:
+        # Potentially a decoding problem, fall back to PIL.Image
+        return pil_loader(path)
+
+
+def default_loader(path):
+    from torchvision import get_image_backend
+    if get_image_backend() == 'accimage':
+        return accimage_loader(path)
+    else:
+        return pil_loader(path)
 
 
 class InMemoryDataset(data.Dataset):
